@@ -1,0 +1,60 @@
+{
+  "manifest_version": 3,
+  "name": "Coding Platform to GitHub",
+  "version": "1.0.0",
+  "description": "Extract questions and solutions from coding platforms and push to GitHub",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://api.github.com/*",
+    "https://leetcode.com/*",
+    "https://*.leetcode.com/*",
+    "https://www.geeksforgeeks.org/*",
+    "https://*.geeksforgeeks.org/*",
+    "https://codeforces.com/*",
+    "https://*.codeforces.com/*",
+    "https://www.hackerrank.com/*",
+    "https://*.hackerrank.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://leetcode.com/*",
+        "https://*.leetcode.com/*",
+        "https://www.geeksforgeeks.org/*",
+        "https://*.geeksforgeeks.org/*",
+        "https://codeforces.com/*",
+        "https://*.codeforces.com/*",
+        "https://www.hackerrank.com/*",
+        "https://*.hackerrank.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["extractors.js"],
+      "matches": [
+        "https://leetcode.com/*",
+        "https://*.leetcode.com/*",
+        "https://www.geeksforgeeks.org/*",
+        "https://*.geeksforgeeks.org/*",
+        "https://codeforces.com/*",
+        "https://*.codeforces.com/*",
+        "https://www.hackerrank.com/*",
+        "https://*.hackerrank.com/*"
+      ]
+    }
+  ]
+}
+

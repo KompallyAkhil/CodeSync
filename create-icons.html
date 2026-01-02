@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Icon Generator for Extension</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+    canvas {
+      border: 1px solid #ccc;
+      display: block;
+      margin: 20px 0;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      cursor: pointer;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    .info {
+      background: #e7f3ff;
+      padding: 15px;
+      border-radius: 4px;
+      margin: 20px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Extension Icon Generator</h1>
+  <div class="info">
+    <p>This tool creates simple icons for the extension. Click the buttons below to generate and download icon files.</p>
+    <p><strong>Instructions:</strong></p>
+    <ol>
+      <li>Click each button to generate and download the icon</li>
+      <li>Save all three files in the <code>icons/</code> folder</li>
+      <li>Update <code>manifest.json</code> to include the icons (see icons/README.md)</li>
+    </ol>
+  </div>
+
+  <canvas id="iconCanvas" width="128" height="128"></canvas>
+
+  <div>
+    <button onclick="generateIcon(16)">Generate & Download 16x16</button>
+    <button onclick="generateIcon(48)">Generate & Download 48x48</button>
+    <button onclick="generateIcon(128)">Generate & Download 128x128</button>
+  </div>
+
+  <script>
+    function generateIcon(size) {
+      const canvas = document.getElementById('iconCanvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+
+      // Background
+      const gradient = ctx.createLinearGradient(0, 0, size, size);
+      gradient.addColorStop(0, '#4CAF50');
+      gradient.addColorStop(1, '#45a049');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, size, size);
+
+      // Draw code symbol </>
+      ctx.fillStyle = 'white';
+      ctx.font = `bold ${size * 0.4}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('</>', size / 2, size / 2);
+
+      // Download
+      canvas.toBlob(function(blob) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `icon${size}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      });
+    }
+
+    // Draw initial preview
+    generateIcon(128);
+  </script>
+</body>
+</html>
+
