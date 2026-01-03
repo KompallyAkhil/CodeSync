@@ -1,387 +1,429 @@
 <!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      width: 390px;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      background: linear-gradient(180deg, #f0f9ff 0%, #ffffff 100%);
-      color: #1e293b;
-    }
-
-    .header {
-      background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
-      color: #ffffff;
-      padding: 28px 24px;
-      text-align: center;
-      position: relative;
-    }
-
-    .header::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, #3b82f6, #6366f1, #8b5cf6);
-    }
-
-    .header-icon {
-      font-size: 42px;
-      margin-bottom: 10px;
-      display: block;
-      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
-    }
-
-    .header-title {
-      font-size: 24px;
-      font-weight: 700;
-      letter-spacing: -0.5px;
-      margin-bottom: 6px;
-    }
-
-    .header-subtitle {
-      font-size: 13px;
-      opacity: 0.95;
-      font-weight: 400;
-    }
-
-    .content {
-      padding: 24px;
-    }
-
-    .section {
-      background: #ffffff;
-      border-radius: 14px;
-      padding: 22px;
-      margin-bottom: 18px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-      border: 1px solid #e2e8f0;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-
-    .section:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-
-    .section:last-child {
-      margin-bottom: 0;
-    }
-
-    .section-title {
-      font-size: 15px;
-      font-weight: 600;
-      color: #0f172a;
-      margin-bottom: 18px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding-bottom: 12px;
-      border-bottom: 2px solid #f1f5f9;
-    }
-
-    .section-title::before {
-      content: '';
-      width: 4px;
-      height: 20px;
-      background: linear-gradient(180deg, #3b82f6, #6366f1);
-      border-radius: 2px;
-    }
-
-    .form-field {
-      margin-bottom: 18px;
-    }
-
-    .form-field:last-child {
-      margin-bottom: 0;
-    }
-
-    .form-label {
-      display: block;
-      font-size: 12px;
-      color: #475569;
-      margin-bottom: 8px;
-      font-weight: 600;
-      letter-spacing: 0.3px;
-    }
-
-    .form-input {
-      width: 100%;
-      padding: 11px 14px;
-      border: 1.5px solid #e2e8f0;
-      border-radius: 8px;
-      font-size: 13px;
-      font-family: inherit;
-      background: #fafbfc;
-      color: #0f172a;
-      transition: all 0.2s;
-    }
-
-    .form-input:focus {
-      outline: none;
-      border-color: #3b82f6;
-      background: #ffffff;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    }
-
-    .form-input::placeholder {
-      color: #94a3b8;
-    }
-
-    .form-hint {
-      font-size: 11px;
-      color: #64748b;
-      margin-top: 6px;
-      line-height: 1.5;
-    }
-
-    .form-hint a {
-      color: #3b82f6;
-      text-decoration: none;
-      font-weight: 500;
-    }
-
-    .form-hint a:hover {
-      text-decoration: underline;
-    }
-
-    .btn {
-      width: 100%;
-      padding: 13px 18px;
-      border: none;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      font-family: inherit;
-      letter-spacing: 0.2px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .btn::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 0;
-      height: 0;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.3);
-      transform: translate(-50%, -50%);
-      transition: width 0.5s, height 0.5s;
-    }
-
-    .btn:hover::before {
-      width: 400px;
-      height: 400px;
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
-      color: #ffffff;
-      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-    }
-
-    .btn-primary:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
-    }
-
-    .btn-primary:active:not(:disabled) {
-      transform: translateY(0);
-    }
-
-    .btn-primary:disabled {
-      background: #cbd5e1;
-      cursor: not-allowed;
-      box-shadow: none;
-      opacity: 0.7;
-    }
-
-    .btn-secondary {
-      background: #ffffff;
-      color: #3b82f6;
-      border: 1.5px solid #3b82f6;
-      box-shadow: 0 2px 6px rgba(59, 130, 246, 0.15);
-    }
-
-    .btn-secondary:hover {
-      background: #eff6ff;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 10px rgba(59, 130, 246, 0.2);
-    }
-
-    .status {
-      margin-top: 14px;
-      padding: 12px 14px;
-      border-radius: 8px;
-      font-size: 12px;
-      line-height: 1.6;
-      display: none;
-      animation: fadeIn 0.3s;
-    }
-
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(-5px);
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Code Sync</title>
+    <style>
+      :root {
+        --primary: #2563eb;
+        --primary-hover: #1d4ed8;
+        --bg: #ffffff;
+        --text: #0f172a;
+        --text-muted: #64748b;
+        --border: #e2e8f0;
+        --success: #10b981;
+        --error: #ef4444;
+        --surface: #f8fafc;
       }
-      to {
-        opacity: 1;
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        width: 380px;
+        font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.5;
+      }
+
+      /* Header */
+      header {
+        padding: 20px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(8px);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+        font-size: 18px;
+        color: var(--text);
+      }
+
+      .brand-icon {
+        width: 28px;
+        height: 28px;
+        background: linear-gradient(135deg, #2563eb, #4f46e5);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 16px;
+      }
+
+      .settings-btn {
+        background: transparent;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 8px;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .settings-btn:hover {
+        background: var(--surface);
+        color: var(--text);
+      }
+
+      /* Main Content */
+      main {
+        padding: 24px;
+        min-height: 300px;
+      }
+
+      /* Views */
+      .view {
+        display: none;
+        animation: fadeIn 0.3s ease;
+      }
+
+      .view.active {
+        display: block;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(5px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Action View */
+      .hero-section {
+        text-align: center;
+        margin-bottom: 24px;
+      }
+
+      .platform-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-muted);
+        margin-bottom: 16px;
+      }
+
+      .platform-status.active {
+        background: #eff6ff;
+        border-color: #bfdbfe;
+        color: #1e40af;
+      }
+
+      .action-btn {
+        width: 100%;
+        background: linear-gradient(135deg, #2563eb, #4f46e5);
+        color: white;
+        border: none;
+        padding: 16px;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+      }
+
+      .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+      }
+
+      .action-btn:active {
         transform: translateY(0);
       }
-    }
 
-    .status.success {
-      background: #ecfdf5;
-      color: #065f46;
-      border: 1px solid #a7f3d0;
-      display: block;
-    }
+      .action-btn:disabled {
+        background: var(--text-muted);
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+        opacity: 0.7;
+      }
 
-    .status.error {
-      background: #fef2f2;
-      color: #991b1b;
-      border: 1px solid #fecaca;
-      display: block;
-    }
+      /* Status Messages */
+      .status-card {
+        margin-top: 24px;
+        padding: 16px;
+        border-radius: 12px;
+        font-size: 13px;
+        display: none;
+        line-height: 1.6;
+      }
 
-    .status.info {
-      background: #eff6ff;
-      color: #1e40af;
-      border: 1px solid #bfdbfe;
-      display: block;
-    }
+      .status-card.success {
+        background: #ecfdf5;
+        border: 1px solid #a7f3d0;
+        color: #065f46;
+        display: block;
+      }
 
-    .status a {
-      color: inherit;
-      text-decoration: underline;
-      font-weight: 600;
-    }
+      .status-card.error {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #991b1b;
+        display: block;
+      }
 
-    .platform-badge {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 10px 14px;
-      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-      border-radius: 8px;
-      font-size: 12px;
-      color: #475569;
-      font-weight: 600;
-      margin-top: 14px;
-      border: 1px solid #e2e8f0;
-    }
+      .status-card.loading {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+      }
 
-    .platform-badge strong {
-      color: #0f172a;
-    }
+      .status-link {
+        display: inline-block;
+        margin-top: 8px;
+        color: inherit;
+        font-weight: 600;
+        text-decoration: underline;
+      }
 
-    .config-status {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      margin-top: 12px;
-      padding: 7px 12px;
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: 600;
-    }
+      /* Settings View */
+      .settings-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 24px;
+      }
 
-    .config-status.saved {
-      background: #ecfdf5;
-      color: #065f46;
-      border: 1px solid #a7f3d0;
-    }
+      .back-btn {
+        background: transparent;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 4px;
+        display: flex;
+      }
 
-    .config-status.unsaved {
-      background: #fef2f2;
-      color: #991b1b;
-      border: 1px solid #fecaca;
-    }
+      .back-btn:hover {
+        color: var(--text);
+      }
 
-    .spinner {
-      display: inline-block;
-      width: 14px;
-      height: 14px;
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      border-radius: 50%;
-      border-top-color: #ffffff;
-      animation: spin 0.7s linear infinite;
-      margin-right: 6px;
-      vertical-align: middle;
-    }
+      .form-group {
+        margin-bottom: 20px;
+      }
 
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+      .form-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text);
+        margin-bottom: 8px;
+      }
 
-    .divider {
-      height: 1px;
-      background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
-      margin: 20px 0;
-      border: none;
-    }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <span class="header-icon">⚡</span>
-    <div class="header-title">Code to GitHub</div>
-    <div class="header-subtitle">Sync your solutions effortlessly</div>
-  </div>
+      .form-input {
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        font-family: inherit;
+        font-size: 14px;
+        transition: all 0.2s;
+      }
 
-  <div class="content">
-    <div class="section">
-      <div class="section-title">GitHub Configuration</div>
-      
-      <div class="form-field">
-        <label class="form-label" for="githubToken">Personal Access Token</label>
-        <input type="password" class="form-input" id="githubToken" placeholder="ghp_xxxxxxxxxxxx">
-        <div class="form-hint">
-          Create at <a href="https://github.com/settings/tokens" target="_blank">github.com/settings/tokens</a> with <strong>repo</strong> scope
+      .form-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+      }
+
+      .form-hint {
+        font-size: 11px;
+        color: var(--text-muted);
+        margin-top: 6px;
+      }
+
+      .form-hint a {
+        color: var(--primary);
+        text-decoration: none;
+      }
+
+      .save-btn {
+        width: 100%;
+        padding: 14px;
+        background: var(--text);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      .save-btn:hover {
+        background: #1e293b;
+      }
+
+      /* Spinner */
+      .spinner {
+        width: 18px;
+        height: 18px;
+        border: 2px solid rgba(0, 0, 0, 0.1);
+        border-left-color: currentColor;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="brand">
+        <div class="brand-icon">⚡</div>
+        <span>CodeSync</span>
+      </div>
+      <button class="settings-btn" id="toggleSettings" title="Settings">
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path
+            d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"
+          ></path>
+          <circle cx="12" cy="12" r="3"></circle>
+        </svg>
+      </button>
+    </header>
+
+    <main>
+      <!-- Home View -->
+      <div class="view active" id="homeView">
+        <div class="hero-section">
+          <div class="platform-status" id="platformBadge">
+            <span id="platformIcon">🔍</span>
+            <span id="platformName">Detecting...</span>
+          </div>
+
+          <button class="action-btn" id="extractBtn">
+            <span>Extract & Save Solution</span>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+          </button>
         </div>
+
+        <div id="statusContainer"></div>
       </div>
 
-      <div class="form-field">
-        <label class="form-label" for="githubUsername">GitHub Username</label>
-        <input type="text" class="form-input" id="githubUsername" placeholder="your-username">
+      <!-- Settings View -->
+      <div class="view" id="settingsView">
+        <div class="settings-header">
+          <button class="back-btn" id="backBtn">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+          </button>
+          <h3>Configuration</h3>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Personal Access Token</label>
+          <input
+            type="password"
+            id="githubToken"
+            class="form-input"
+            placeholder="ghp_xxxxxxxxxxxx"
+          />
+          <div class="form-hint">
+            Generate token at
+            <a href="https://github.com/settings/tokens" target="_blank"
+              >github.com/settings/tokens</a
+            >
+            (Select 'repo' scope)
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">GitHub Username</label>
+          <input
+            type="text"
+            id="githubUsername"
+            class="form-input"
+            placeholder="e.g. johndoe"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Repository Name</label>
+          <input
+            type="text"
+            id="githubRepo"
+            class="form-input"
+            placeholder="e.g. leetcode-solutions"
+          />
+        </div>
+
+        <button class="save-btn" id="saveConfig">Save Configuration</button>
       </div>
-
-      <div class="form-field">
-        <label class="form-label" for="githubRepo">Repository Name</label>
-        <input type="text" class="form-input" id="githubRepo" placeholder="coding-solutions">
-      </div>
-
-      <button class="btn btn-secondary" id="saveConfig">Save Configuration</button>
-      <div id="configStatus"></div>
-    </div>
-
-    <hr class="divider">
-
-    <div class="section">
-      <div class="section-title">Push to GitHub</div>
-
-      <button class="btn btn-primary" id="extractAndPush">Extract & Push</button>
-
-      <div class="status" id="status"></div>
-      <div class="platform-badge" id="platformInfo">Detecting platform...</div>
-    </div>
-  </div>
-
-  <script src="popup.js"></script>
-</body>
+    </main>
+    <script src="popup.js"></script>
+  </body>
 </html>

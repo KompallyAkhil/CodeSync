@@ -1,191 +1,220 @@
-// Popup script for UI interactions
+// DOM Elements
+const views = {
+  home: document.getElementById("homeView"),
+  settings: document.getElementById("settingsView"),
+};
 
-document.addEventListener('DOMContentLoaded', async () => {
-  // Load saved configuration
-  const result = await chrome.storage.sync.get(['githubToken', 'githubUsername', 'githubRepo']);
-  
-  const tokenInput = document.getElementById('githubToken');
-  const usernameInput = document.getElementById('githubUsername');
-  const repoInput = document.getElementById('githubRepo');
-  const configStatus = document.getElementById('configStatus');
+const btns = {
+  extract: document.getElementById("extractBtn"),
+  settings: document.getElementById("toggleSettings"),
+  back: document.getElementById("backBtn"),
+  save: document.getElementById("saveConfig"),
+};
 
-  if (result.githubToken) {
-    tokenInput.value = result.githubToken;
-  }
-  if (result.githubUsername) {
-    usernameInput.value = result.githubUsername;
-  }
-  if (result.githubRepo) {
-    repoInput.value = result.githubRepo;
-  }
+const inputs = {
+  token: document.getElementById("githubToken"),
+  username: document.getElementById("githubUsername"),
+  repo: document.getElementById("githubRepo"),
+};
 
-  // Update config status
-  function updateConfigStatus() {
-    const hasToken = tokenInput.value.trim().length > 0;
-    const hasUsername = usernameInput.value.trim().length > 0;
-    const hasRepo = repoInput.value.trim().length > 0;
-    const isConfigured = hasToken && hasUsername && hasRepo;
+const statusContainer = document.getElementById("statusContainer");
+const platformBadge = document.getElementById("platformBadge");
+const platformName = document.getElementById("platformName");
 
-    if (isConfigured) {
-      configStatus.innerHTML = '<span class="config-status saved">Configuration saved</span>';
-    } else {
-      configStatus.innerHTML = '<span class="config-status unsaved">Incomplete configuration</span>';
-    }
-  }
+// State
+let currentPlatform = null;
 
-  // Check on input changes
-  [tokenInput, usernameInput, repoInput].forEach(input => {
-    input.addEventListener('input', updateConfigStatus);
-  });
-
-  // Initial status check
-  updateConfigStatus();
-
-  // Save configuration button
-  document.getElementById('saveConfig').addEventListener('click', async () => {
-    const token = tokenInput.value.trim();
-    const username = usernameInput.value.trim();
-    const repo = repoInput.value.trim();
-
-    if (!token || !username || !repo) {
-      showStatus('Please fill in all fields', 'error');
-      return;
-    }
-
-    const saveBtn = document.getElementById('saveConfig');
-    const originalText = saveBtn.textContent;
-    saveBtn.innerHTML = '<span class="spinner"></span>Saving...';
-    saveBtn.disabled = true;
-
-    try {
-      await chrome.storage.sync.set({
-        githubToken: token,
-        githubUsername: username,
-        githubRepo: repo
-      });
-
-      showStatus('Configuration saved successfully', 'success');
-      updateConfigStatus();
-    } catch (error) {
-      showStatus(`Error: ${error.message}`, 'error');
-    } finally {
-      saveBtn.textContent = originalText;
-      saveBtn.disabled = false;
-    }
-  });
-
-  // Extract and push button
-  document.getElementById('extractAndPush').addEventListener('click', async () => {
-    const button = document.getElementById('extractAndPush');
-    const originalText = button.textContent;
-    button.disabled = true;
-    button.innerHTML = '<span class="spinner"></span>Processing...';
-
-    try {
-      // Get current tab
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-
-      // Check if we're on a supported platform
-      const supportedPlatforms = ['leetcode.com', 'geeksforgeeks.org', 'codeforces.com', 'hackerrank.com'];
-      const isSupported = supportedPlatforms.some(platform => tab.url.includes(platform));
-
-      if (!isSupported) {
-        showStatus('Please navigate to a supported coding platform', 'error');
-        button.disabled = false;
-        button.textContent = originalText;
-        return;
-      }
-
-      // Inject extractors script if needed
-      await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        files: ['extractors.js']
-      });
-
-      // Extract data from page
-      const response = await chrome.tabs.sendMessage(tab.id, { action: 'extract' });
-
-      if (!response.success || !response.data) {
-        showStatus('Failed to extract problem data. Make sure you are on a problem page with code visible.', 'error');
-        button.disabled = false;
-        button.textContent = originalText;
-        return;
-      }
-
-      const problemData = response.data;
-
-      // Get GitHub configuration
-      const config = await chrome.storage.sync.get(['githubToken', 'githubUsername', 'githubRepo']);
-      
-      if (!config.githubToken || !config.githubUsername || !config.githubRepo) {
-        showStatus('Please configure GitHub settings first', 'error');
-        button.disabled = false;
-        button.textContent = originalText;
-        return;
-      }
-
-      showStatus('Pushing to GitHub...', 'info');
-
-      // Push to GitHub
-      const pushResponse = await chrome.runtime.sendMessage({
-        action: 'pushToGitHub',
-        data: {
-          problemData: problemData,
-          githubConfig: config
-        }
-      });
-
-      if (pushResponse.success) {
-        const result = pushResponse.result;
-        showStatus(
-          `Successfully pushed to GitHub<br><br><strong>File:</strong> ${result.filePath}<br><br><a href="${result.url}" target="_blank">View on GitHub</a>`,
-          'success'
-        );
-      } else {
-        showStatus(`Error: ${pushResponse.error}`, 'error');
-      }
-    } catch (error) {
-      showStatus(`Error: ${error.message}`, 'error');
-    } finally {
-      button.disabled = false;
-      button.textContent = originalText;
-    }
-  });
-
-  // Show current platform info
-  chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
-    const tab = tabs[0];
-    const platformInfo = document.getElementById('platformInfo');
-    
-    let platformName = null;
-
-    if (tab.url.includes('leetcode.com')) {
-      platformName = 'LeetCode';
-    } else if (tab.url.includes('geeksforgeeks.org')) {
-      platformName = 'GeeksforGeeks';
-    } else if (tab.url.includes('codeforces.com')) {
-      platformName = 'Codeforces';
-    } else if (tab.url.includes('hackerrank.com')) {
-      platformName = 'HackerRank';
-    }
-
-    if (platformName) {
-      platformInfo.innerHTML = `Platform: <strong>${platformName}</strong>`;
-    } else {
-      platformInfo.innerHTML = 'Navigate to a supported coding platform';
-    }
-  });
+// Initialize
+document.addEventListener("DOMContentLoaded", async () => {
+  await loadConfig();
+  await detectPlatform();
+  setupListeners();
 });
 
-function showStatus(message, type) {
-  const statusDiv = document.getElementById('status');
-  statusDiv.className = `status ${type}`;
-  statusDiv.innerHTML = message;
-  
-  // Auto-hide success messages after 5 seconds
-  if (type === 'success') {
-    setTimeout(() => {
-      statusDiv.style.display = 'none';
-    }, 5000);
+// View Navigation
+function switchView(viewName) {
+  Object.values(views).forEach((el) => el.classList.remove("active"));
+  views[viewName].classList.add("active");
+
+  // Update header settings button visibility
+  btns.settings.style.display = viewName === "home" ? "flex" : "none";
+}
+
+// Configuration Management
+async function loadConfig() {
+  const config = await chrome.storage.sync.get([
+    "githubToken",
+    "githubUsername",
+    "githubRepo",
+  ]);
+
+  if (config.githubToken) inputs.token.value = config.githubToken;
+  if (config.githubUsername) inputs.username.value = config.githubUsername;
+  if (config.githubRepo) inputs.repo.value = config.githubRepo;
+
+  // If not configured, show settings immediately
+  if (!config.githubToken || !config.githubUsername || !config.githubRepo) {
+    switchView("settings");
   }
+}
+
+async function saveConfig() {
+  const token = inputs.token.value.trim();
+  const username = inputs.username.value.trim();
+  const repo = inputs.repo.value.trim();
+
+  if (!token || !username || !repo) {
+    showStatus("Please fill in all fields", "error", true); // Show inside settings
+    return;
+  }
+
+  const originalText = btns.save.textContent;
+  btns.save.innerHTML = '<div class="spinner"></div> Saving...';
+  btns.save.disabled = true;
+
+  try {
+    await chrome.storage.sync.set({
+      githubToken: token,
+      githubUsername: username,
+      githubRepo: repo,
+    });
+
+    // Switch back to home
+    switchView("home");
+    showStatus("Configuration saved ready to sync!", "success");
+  } catch (error) {
+    console.error(error); // Debugging
+    // showStatus may not work well inside settings view if statusContainer is in home view
+    // so we might alert or just add a small status div in settings if needed.
+    // For now, let's just use alert for critical config failure or assume Success.
+    alert("Failed to save settings: " + error.message);
+  } finally {
+    btns.save.textContent = originalText;
+    btns.save.disabled = false;
+  }
+}
+
+// Platform Detection
+async function detectPlatform() {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+  const platforms = {
+    "leetcode.com": "LeetCode",
+    "geeksforgeeks.org": "GeeksforGeeks",
+    "codeforces.com": "Codeforces",
+    "hackerrank.com": "HackerRank",
+  };
+
+  const detected = Object.keys(platforms).find((domain) =>
+    tab.url.includes(domain)
+  );
+
+  if (detected) {
+    currentPlatform = platforms[detected];
+    platformName.textContent = currentPlatform;
+    platformBadge.classList.add("active");
+    btns.extract.disabled = false;
+  } else {
+    currentPlatform = null;
+    platformName.textContent = "Unsupported Platform";
+    platformBadge.classList.remove("active");
+    btns.extract.disabled = true;
+    showStatus(
+      "Please navigate to a supported coding platform (LeetCode, GFG, etc.)",
+      "error"
+    );
+  }
+}
+
+// Logic
+async function handleExtract() {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+  updateStatus("loading", "Extracting and saving...");
+  btns.extract.disabled = true;
+
+  try {
+    // 1. Inject Scripts
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      files: ["extractors.js"],
+    });
+
+    // 2. Extract Data
+    const response = await chrome.tabs.sendMessage(tab.id, {
+      action: "extract",
+    });
+
+    if (!response || !response.success || !response.data) {
+      throw new Error(
+        "Failed to extract data. Ensure you are on a problem page."
+      );
+    }
+
+    // 3. Push to GitHub
+    const config = await chrome.storage.sync.get([
+      "githubToken",
+      "githubUsername",
+      "githubRepo",
+    ]);
+
+    // Double check config
+    if (!config.githubToken) {
+      switchView("settings");
+      throw new Error("Please configure GitHub first.");
+    }
+
+    const pushResponse = await chrome.runtime.sendMessage({
+      action: "pushToGitHub",
+      data: {
+        problemData: response.data,
+        githubConfig: config,
+      },
+    });
+
+    if (pushResponse.success) {
+      showStatus(
+        `Success! <a href="${pushResponse.result.url}" target="_blank">View on GitHub</a><br><small>${pushResponse.result.filePath}</small>`,
+        "success"
+      );
+    } else {
+      throw new Error(pushResponse.error || "Unknown error during push");
+    }
+  } catch (error) {
+    showStatus(error.message, "error");
+  } finally {
+    btns.extract.disabled = false;
+  }
+}
+
+// UI Helpers
+function updateStatus(type, message) {
+  statusContainer.innerHTML = `
+    <div class="status-card ${type}">
+      ${
+        type === "loading"
+          ? '<div class="spinner" style="border-left-color: var(--text); width:14px; height:14px;"></div>'
+          : ""
+      }
+      ${message}
+    </div>
+  `;
+}
+
+function showStatus(message, type, isSettings = false) {
+  // If we are in settings, we might need a different place to show status or just switch view?
+  // Current design has statusContainer on Home View.
+  // For simplicity, if error is in settings, we use alert (or we could add a status div in settings).
+  if (isSettings) {
+    alert(message);
+    return;
+  }
+  updateStatus(type, message);
+}
+
+function setupListeners() {
+  btns.settings.addEventListener("click", () => switchView("settings"));
+  btns.back.addEventListener("click", () => switchView("home"));
+  btns.save.addEventListener("click", saveConfig);
+  btns.extract.addEventListener("click", handleExtract);
 }
