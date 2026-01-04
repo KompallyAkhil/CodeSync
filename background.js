@@ -95,8 +95,8 @@ async function pushToGitHub(data) {
       );
     }
 
-    // Remove leading numbers
-    cleanTitle = cleanTitle.replace(/^\d+\.?\s*/g, "");
+    // Remove leading numbers - REMOVED to preserve titles like "2 Sum", "3Sum"
+    // cleanTitle = cleanTitle.replace(/^\d+\.?\s*/g, "");
     cleanTitle = cleanTitle.trim();
 
     if (!cleanTitle || cleanTitle.length === 0) {
