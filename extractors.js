@@ -3,30 +3,30 @@
 class PlatformExtractor {
   static detectPlatform() {
     const hostname = window.location.hostname;
-    
-    if (hostname.includes('leetcode.com')) {
-      return 'leetcode';
-    } else if (hostname.includes('geeksforgeeks.org')) {
-      return 'geeksforgeeks';
-    } else if (hostname.includes('codeforces.com')) {
-      return 'codeforces';
-    } else if (hostname.includes('hackerrank.com')) {
-      return 'hackerrank';
+
+    if (hostname.includes("leetcode.com")) {
+      return "leetcode";
+    } else if (hostname.includes("geeksforgeeks.org")) {
+      return "geeksforgeeks";
+    } else if (hostname.includes("codeforces.com")) {
+      return "codeforces";
+    } else if (hostname.includes("hackerrank.com")) {
+      return "hackerrank";
     }
-    return 'unknown';
+    return "unknown";
   }
 
   static extract() {
     const platform = this.detectPlatform();
-    
+
     switch (platform) {
-      case 'leetcode':
+      case "leetcode":
         return this.extractLeetCode();
-      case 'geeksforgeeks':
+      case "geeksforgeeks":
         return this.extractGeeksforGeeks();
-      case 'codeforces':
+      case "codeforces":
         return this.extractCodeforces();
-      case 'hackerrank':
+      case "hackerrank":
         return this.extractHackerRank();
       default:
         return null;
@@ -36,50 +36,122 @@ class PlatformExtractor {
   static extractLeetCode() {
     try {
       // Extract problem title
-      const titleElement = document.querySelector('[data-cy="question-title"]') || 
-                          document.querySelector('div[class*="title"]') ||
-                          document.querySelector('h3');
-      const title = titleElement ? titleElement.textContent.trim() : 'Unknown Problem';
+      const titleElement =
+        document.querySelector('[data-cy="question-title"]') ||
+        document.querySelector('div[class*="title"]') ||
+        document.querySelector("h3");
+      const title = titleElement
+        ? titleElement.textContent.trim()
+        : "Unknown Problem";
 
       // Extract problem number
-      const problemNumber = title.match(/^(\d+)\./)?.[1] || '';
+      const problemNumber = title.match(/^(\d+)\./)?.[1] || "";
 
       // Extract problem description
-      const descriptionElement = document.querySelector('[data-cy="description"]') ||
-                                document.querySelector('.question-content__JfgR') ||
-                                document.querySelector('[class*="description"]');
-      const description = descriptionElement ? descriptionElement.innerText : '';
+      const descriptionElement =
+        document.querySelector('[data-cy="description"]') ||
+        document.querySelector(".question-content__JfgR") ||
+        document.querySelector('[class*="description"]');
+      const description = descriptionElement
+        ? descriptionElement.innerText
+        : "";
 
       // Extract language - try multiple methods
-      let language = 'unknown';
-      
+      let language = "unknown";
+
       // Method 1: Check language selector button/dropdown
-      const langButton = document.querySelector('[data-cy="lang-select"]') ||
-                        document.querySelector('button[class*="language"]') ||
-                        document.querySelector('div[class*="lang-select"]') ||
-                        document.querySelector('select[class*="language"]');
-      
+      const langButton =
+        document.querySelector('[data-cy="lang-select"]') ||
+        document.querySelector('button[class*="language"]') ||
+        document.querySelector('div[class*="lang-select"]') ||
+        document.querySelector('select[class*="language"]');
+
       if (langButton) {
-        language = langButton.textContent.trim() || langButton.value || langButton.getAttribute('data-lang') || 'unknown';
+        language =
+          langButton.textContent.trim() ||
+          langButton.value ||
+          langButton.getAttribute("data-lang") ||
+          "unknown";
       }
 
       // Method 2: Check Monaco editor language attribute
-      const monacoEditor = document.querySelector('.monaco-editor');
-      if (monacoEditor && language === 'unknown') {
-        const editorModel = monacoEditor.getAttribute('data-mode-id') || 
-                           monacoEditor.getAttribute('data-lang');
+      const monacoEditor = document.querySelector(".monaco-editor");
+      if (monacoEditor && language === "unknown") {
+        const editorModel =
+          monacoEditor.getAttribute("data-mode-id") ||
+          monacoEditor.getAttribute("data-lang");
         if (editorModel) {
-          language = editorModel.split('/').pop() || editorModel;
+          language = editorModel.split("/").pop() || editorModel;
         }
       }
 
       // Method 3: Check for language in editor container
-      if (language === 'unknown') {
+      if (language === "unknown") {
         const editorContainer = document.querySelector('[class*="editor"]');
         if (editorContainer) {
-          const langAttr = editorContainer.getAttribute('data-language') ||
-                          editorContainer.getAttribute('data-lang');
+          const langAttr =
+            editorContainer.getAttribute("data-language") ||
+            editorContainer.getAttribute("data-lang");
           if (langAttr) language = langAttr;
+        }
+      }
+
+      // Method 4: Search for known language names in buttons (Robust fallback for UI changes)
+      if (language === "unknown") {
+        const knownLanguages = [
+          "C++",
+          "Java",
+          "Python",
+          "Python3",
+          "C",
+          "C#",
+          "JavaScript",
+          "TypeScript",
+          "PHP",
+          "Swift",
+          "Kotlin",
+          "Dart",
+          "Go",
+          "Ruby",
+          "Scala",
+          "Rust",
+          "Racket",
+          "Erlang",
+          "Elixir",
+          "Pandas",
+          "React",
+        ];
+
+        // Find buttons or divs that might be the language selector
+        // We look for elements with precise text matches to known languages
+        const formattingBar = document.querySelectorAll(
+          'div[class*="flex"], div[class*="toolbar"]'
+        );
+
+        for (const bar of formattingBar) {
+          const elements = bar.querySelectorAll(
+            'button, div[role="button"], span'
+          );
+          for (const el of elements) {
+            const text = el.textContent.trim();
+            // Check exact match or "Language: X" format
+            if (knownLanguages.includes(text)) {
+              language = text;
+              break;
+            }
+          }
+          if (language !== "unknown") break;
+        }
+
+        // Super fallback: Check all buttons on page if still unknown (risky but better than txt)
+        if (language === "unknown") {
+          const allButtons = document.querySelectorAll("button");
+          for (const btn of allButtons) {
+            if (knownLanguages.includes(btn.textContent.trim())) {
+              language = btn.textContent.trim();
+              break;
+            }
+          }
         }
       }
 
@@ -87,23 +159,23 @@ class PlatformExtractor {
       language = this.normalizeLanguage(language);
 
       // Extract code solution - prioritize Monaco editor
-      let code = '';
-      
+      let code = "";
+
       // Method 1: Try Monaco editor (LeetCode's main editor)
-      const monacoEditorElement = document.querySelector('.monaco-editor');
+      const monacoEditorElement = document.querySelector(".monaco-editor");
       if (monacoEditorElement) {
         // Try to get code from Monaco editor view lines
-        const viewLines = monacoEditorElement.querySelectorAll('.view-line');
+        const viewLines = monacoEditorElement.querySelectorAll(".view-line");
         if (viewLines.length > 0) {
           code = Array.from(viewLines)
-            .map(line => {
-              const lineText = line.textContent || '';
+            .map((line) => {
+              const lineText = line.textContent || "";
               // Remove trailing whitespace but preserve structure
-              return lineText.replace(/\s+$/, '');
+              return lineText.replace(/\s+$/, "");
             })
-            .join('\n');
+            .join("\n");
         }
-        
+
         // Alternative: Try to access Monaco editor model directly via window
         if (!code && window.monaco) {
           try {
@@ -118,10 +190,10 @@ class PlatformExtractor {
             // Monaco API not accessible, try next method
           }
         }
-        
+
         // Alternative: Try to find Monaco's hidden textarea
         if (!code) {
-          const monacoTextarea = monacoEditorElement.querySelector('textarea');
+          const monacoTextarea = monacoEditorElement.querySelector("textarea");
           if (monacoTextarea && monacoTextarea.value) {
             code = monacoTextarea.value;
           }
@@ -130,16 +202,17 @@ class PlatformExtractor {
 
       // Method 2: Try textarea (fallback)
       if (!code) {
-        const textarea = document.querySelector('textarea[class*="input"]') ||
-                        document.querySelector('textarea[class*="code"]');
+        const textarea =
+          document.querySelector('textarea[class*="input"]') ||
+          document.querySelector('textarea[class*="code"]');
         if (textarea) {
-          code = textarea.value || textarea.textContent || '';
+          code = textarea.value || textarea.textContent || "";
         }
       }
 
       // Method 3: Try CodeMirror
       if (!code) {
-        const codeMirror = document.querySelector('.CodeMirror-code');
+        const codeMirror = document.querySelector(".CodeMirror-code");
         if (codeMirror) {
           code = codeMirror.innerText;
         }
@@ -147,24 +220,25 @@ class PlatformExtractor {
 
       // Method 4: Try pre/code elements
       if (!code) {
-        const codeElement = document.querySelector('pre code') ||
-                           document.querySelector('pre[class*="code"]');
+        const codeElement =
+          document.querySelector("pre code") ||
+          document.querySelector('pre[class*="code"]');
         if (codeElement) {
-          code = codeElement.textContent || codeElement.innerText || '';
+          code = codeElement.textContent || codeElement.innerText || "";
         }
       }
 
       return {
-        platform: 'leetcode',
+        platform: "leetcode",
         title: title,
         problemNumber: problemNumber,
         description: description,
         code: code.trim(),
         language: language,
-        url: window.location.href
+        url: window.location.href,
       };
     } catch (error) {
-      console.error('Error extracting LeetCode data:', error);
+      console.error("Error extracting LeetCode data:", error);
       return null;
     }
   }
@@ -172,38 +246,47 @@ class PlatformExtractor {
   static extractGeeksforGeeks() {
     try {
       // Extract problem title
-      const titleElement = document.querySelector('.gfg-article-title') ||
-                          document.querySelector('h1') ||
-                          document.querySelector('.title');
-      const title = titleElement ? titleElement.textContent.trim() : 'Unknown Problem';
+      const titleElement =
+        document.querySelector(".gfg-article-title") ||
+        document.querySelector("h1") ||
+        document.querySelector(".title");
+      const title = titleElement
+        ? titleElement.textContent.trim()
+        : "Unknown Problem";
 
       // Extract problem description
-      const descriptionElement = document.querySelector('.problem-statement') ||
-                                document.querySelector('.content') ||
-                                document.querySelector('article');
-      const description = descriptionElement ? descriptionElement.innerText : '';
+      const descriptionElement =
+        document.querySelector(".problem-statement") ||
+        document.querySelector(".content") ||
+        document.querySelector("article");
+      const description = descriptionElement
+        ? descriptionElement.innerText
+        : "";
 
       // Extract language
-      let language = 'unknown';
-      
+      let language = "unknown";
+
       // Try to find language selector
-      const langSelector = document.querySelector('[class*="language"]') ||
-                          document.querySelector('button[class*="lang"]') ||
-                          document.querySelector('select[class*="lang"]') ||
-                          document.querySelector('[data-language]');
-      
+      const langSelector =
+        document.querySelector('[class*="language"]') ||
+        document.querySelector('button[class*="lang"]') ||
+        document.querySelector('select[class*="lang"]') ||
+        document.querySelector("[data-language]");
+
       if (langSelector) {
-        language = langSelector.textContent.trim() || 
-                  langSelector.value || 
-                  langSelector.getAttribute('data-language') ||
-                  langSelector.getAttribute('data-lang') ||
-                  'unknown';
+        language =
+          langSelector.textContent.trim() ||
+          langSelector.value ||
+          langSelector.getAttribute("data-language") ||
+          langSelector.getAttribute("data-lang") ||
+          "unknown";
       }
 
       // Check code block for language class
-      if (language === 'unknown') {
-        const codeBlock = document.querySelector('pre[class*="language"]') ||
-                         document.querySelector('code[class*="language"]');
+      if (language === "unknown") {
+        const codeBlock =
+          document.querySelector('pre[class*="language"]') ||
+          document.querySelector('code[class*="language"]');
         if (codeBlock) {
           const classes = codeBlock.className;
           const langMatch = classes.match(/language-(\w+)/);
@@ -216,43 +299,44 @@ class PlatformExtractor {
       language = this.normalizeLanguage(language);
 
       // Extract code solution - prioritize editor content
-      let code = '';
-      
+      let code = "";
+
       // Try CodeMirror editor
-      const codeMirror = document.querySelector('.CodeMirror-code');
+      const codeMirror = document.querySelector(".CodeMirror-code");
       if (codeMirror) {
         code = codeMirror.innerText;
       }
-      
+
       // Try textarea
       if (!code) {
-        const textarea = document.querySelector('textarea');
+        const textarea = document.querySelector("textarea");
         if (textarea) {
-          code = textarea.value || textarea.textContent || '';
+          code = textarea.value || textarea.textContent || "";
         }
       }
 
       // Try pre/code elements
       if (!code) {
-        const codeElement = document.querySelector('pre code') ||
-                           document.querySelector('pre[class*="code"]') ||
-                           document.querySelector('.code-container pre');
+        const codeElement =
+          document.querySelector("pre code") ||
+          document.querySelector('pre[class*="code"]') ||
+          document.querySelector(".code-container pre");
         if (codeElement) {
-          code = codeElement.textContent || codeElement.innerText || '';
+          code = codeElement.textContent || codeElement.innerText || "";
         }
       }
 
       return {
-        platform: 'geeksforgeeks',
+        platform: "geeksforgeeks",
         title: title,
-        problemNumber: '',
+        problemNumber: "",
         description: description,
         code: code.trim(),
         language: language,
-        url: window.location.href
+        url: window.location.href,
       };
     } catch (error) {
-      console.error('Error extracting GeeksforGeeks data:', error);
+      console.error("Error extracting GeeksforGeeks data:", error);
       return null;
     }
   }
@@ -260,79 +344,91 @@ class PlatformExtractor {
   static extractCodeforces() {
     try {
       // Extract problem title
-      const titleElement = document.querySelector('.title') ||
-                          document.querySelector('h2') ||
-                          document.querySelector('[class*="problem-title"]');
-      const title = titleElement ? titleElement.textContent.trim() : 'Unknown Problem';
+      const titleElement =
+        document.querySelector(".title") ||
+        document.querySelector("h2") ||
+        document.querySelector('[class*="problem-title"]');
+      const title = titleElement
+        ? titleElement.textContent.trim()
+        : "Unknown Problem";
 
       // Extract problem description
-      const descriptionElement = document.querySelector('.problem-statement') ||
-                                document.querySelector('.ttypography');
-      const description = descriptionElement ? descriptionElement.innerText : '';
+      const descriptionElement =
+        document.querySelector(".problem-statement") ||
+        document.querySelector(".ttypography");
+      const description = descriptionElement
+        ? descriptionElement.innerText
+        : "";
 
       // Extract language
-      let language = 'unknown';
-      
+      let language = "unknown";
+
       // Codeforces uses language selectors in submission/editor pages
-      const langSelector = document.querySelector('select[name="programTypeId"]') ||
-                          document.querySelector('[name="language"]') ||
-                          document.querySelector('[class*="language"]') ||
-                          document.querySelector('option[selected]');
-      
+      const langSelector =
+        document.querySelector('select[name="programTypeId"]') ||
+        document.querySelector('[name="language"]') ||
+        document.querySelector('[class*="language"]') ||
+        document.querySelector("option[selected]");
+
       if (langSelector) {
-        if (langSelector.tagName === 'SELECT') {
-          language = langSelector.options[langSelector.selectedIndex]?.text || 
-                    langSelector.value || 'unknown';
+        if (langSelector.tagName === "SELECT") {
+          language =
+            langSelector.options[langSelector.selectedIndex]?.text ||
+            langSelector.value ||
+            "unknown";
         } else {
-          language = langSelector.textContent.trim() || 
-                    langSelector.value || 
-                    langSelector.getAttribute('data-lang') ||
-                    'unknown';
+          language =
+            langSelector.textContent.trim() ||
+            langSelector.value ||
+            langSelector.getAttribute("data-lang") ||
+            "unknown";
         }
       }
 
       language = this.normalizeLanguage(language);
 
       // Extract code solution
-      let code = '';
-      
+      let code = "";
+
       // Try program source
-      const programSource = document.querySelector('pre.program-source');
+      const programSource = document.querySelector("pre.program-source");
       if (programSource) {
-        code = programSource.textContent || programSource.innerText || '';
+        code = programSource.textContent || programSource.innerText || "";
       }
-      
+
       // Try textarea (editor)
       if (!code) {
-        const textarea = document.querySelector('textarea#sourceCodeTextarea') ||
-                        document.querySelector('textarea[name="source"]') ||
-                        document.querySelector('textarea');
+        const textarea =
+          document.querySelector("textarea#sourceCodeTextarea") ||
+          document.querySelector('textarea[name="source"]') ||
+          document.querySelector("textarea");
         if (textarea) {
-          code = textarea.value || textarea.textContent || '';
+          code = textarea.value || textarea.textContent || "";
         }
       }
 
       // Try pre/code elements
       if (!code) {
-        const codeElement = document.querySelector('pre code') ||
-                           document.querySelector('pre') ||
-                           document.querySelector('code');
+        const codeElement =
+          document.querySelector("pre code") ||
+          document.querySelector("pre") ||
+          document.querySelector("code");
         if (codeElement) {
-          code = codeElement.textContent || codeElement.innerText || '';
+          code = codeElement.textContent || codeElement.innerText || "";
         }
       }
 
       return {
-        platform: 'codeforces',
+        platform: "codeforces",
         title: title,
-        problemNumber: '',
+        problemNumber: "",
         description: description,
         code: code.trim(),
         language: language,
-        url: window.location.href
+        url: window.location.href,
       };
     } catch (error) {
-      console.error('Error extracting Codeforces data:', error);
+      console.error("Error extracting Codeforces data:", error);
       return null;
     }
   }
@@ -340,78 +436,91 @@ class PlatformExtractor {
   static extractHackerRank() {
     try {
       // Extract problem title
-      const titleElement = document.querySelector('.challenge-title') ||
-                          document.querySelector('h1') ||
-                          document.querySelector('[class*="title"]') ||
-                          document.querySelector('.ui-icon-label');
-      const title = titleElement ? titleElement.textContent.trim() : 'Unknown Problem';
+      const titleElement =
+        document.querySelector(".challenge-title") ||
+        document.querySelector("h1") ||
+        document.querySelector('[class*="title"]') ||
+        document.querySelector(".ui-icon-label");
+      const title = titleElement
+        ? titleElement.textContent.trim()
+        : "Unknown Problem";
 
       // Extract problem description - try multiple selectors
-      let description = '';
+      let description = "";
       const descriptionSelectors = [
-        '.challenge-body',
-        '.challenge-text',
-        '.challenge-description',
+        ".challenge-body",
+        ".challenge-text",
+        ".challenge-description",
         '[class*="description"]',
-        '.problem-statement',
-        '.challenge-problem-statement',
-        '.problem-description'
+        ".problem-statement",
+        ".challenge-problem-statement",
+        ".problem-description",
       ];
-      
+
       for (const selector of descriptionSelectors) {
         const descElement = document.querySelector(selector);
         if (descElement) {
-          description = descElement.innerText || descElement.textContent || '';
+          description = descElement.innerText || descElement.textContent || "";
           if (description.trim().length > 50) break; // Use first substantial description
         }
       }
 
       // Extract language - try multiple methods
-      let language = 'unknown';
-      
+      let language = "unknown";
+
       // Method 1: Check language dropdown/select
-      const langSelect = document.querySelector('select[data-attr1="language"]') ||
-                        document.querySelector('select[class*="lang"]') ||
-                        document.querySelector('select[name="language"]') ||
-                        document.querySelector('.select-wrapper select');
-      
-      if (langSelect && langSelect.tagName === 'SELECT') {
+      const langSelect =
+        document.querySelector('select[data-attr1="language"]') ||
+        document.querySelector('select[class*="lang"]') ||
+        document.querySelector('select[name="language"]') ||
+        document.querySelector(".select-wrapper select");
+
+      if (langSelect && langSelect.tagName === "SELECT") {
         const selectedOption = langSelect.options[langSelect.selectedIndex];
         if (selectedOption) {
-          language = selectedOption.textContent.trim() || selectedOption.value || 'unknown';
+          language =
+            selectedOption.textContent.trim() ||
+            selectedOption.value ||
+            "unknown";
         }
-        if (language === 'unknown' && langSelect.value) {
+        if (language === "unknown" && langSelect.value) {
           language = langSelect.value;
         }
       }
 
       // Method 2: Check for language indicator/button
-      if (language === 'unknown') {
-        const langButton = document.querySelector('[class*="language"]') ||
-                          document.querySelector('[class*="lang-select"]') ||
-                          document.querySelector('button[class*="lang"]') ||
-                          document.querySelector('.ui-selectmenu-text');
+      if (language === "unknown") {
+        const langButton =
+          document.querySelector('[class*="language"]') ||
+          document.querySelector('[class*="lang-select"]') ||
+          document.querySelector('button[class*="lang"]') ||
+          document.querySelector(".ui-selectmenu-text");
         if (langButton) {
-          language = langButton.textContent.trim() || 
-                    langButton.getAttribute('data-lang') ||
-                    langButton.value ||
-                    'unknown';
+          language =
+            langButton.textContent.trim() ||
+            langButton.getAttribute("data-lang") ||
+            langButton.value ||
+            "unknown";
         }
       }
 
       // Method 3: Check for selected option
-      if (language === 'unknown') {
-        const selectedOption = document.querySelector('option[selected]') ||
-                              document.querySelector('option[selected="selected"]');
+      if (language === "unknown") {
+        const selectedOption =
+          document.querySelector("option[selected]") ||
+          document.querySelector('option[selected="selected"]');
         if (selectedOption) {
-          language = selectedOption.textContent.trim() || selectedOption.value || 'unknown';
+          language =
+            selectedOption.textContent.trim() ||
+            selectedOption.value ||
+            "unknown";
         }
       }
 
       // Method 4: Check URL or page context for language hint
-      if (language === 'unknown') {
+      if (language === "unknown") {
         const urlParams = new URLSearchParams(window.location.search);
-        const langParam = urlParams.get('language') || urlParams.get('lang');
+        const langParam = urlParams.get("language") || urlParams.get("lang");
         if (langParam) {
           language = langParam;
         }
@@ -420,162 +529,171 @@ class PlatformExtractor {
       language = this.normalizeLanguage(language);
 
       // Extract code solution - prioritize active editor
-      let code = '';
-      
+      let code = "";
+
       // Method 1: Try CodeMirror (HackerRank's main editor)
-      const codeMirror = document.querySelector('.CodeMirror-code');
+      const codeMirror = document.querySelector(".CodeMirror-code");
       if (codeMirror) {
         // Get all lines from CodeMirror
-        const lines = codeMirror.querySelectorAll('.CodeMirror-line');
+        const lines = codeMirror.querySelectorAll(".CodeMirror-line");
         if (lines.length > 0) {
           code = Array.from(lines)
-            .map(line => line.textContent || line.innerText || '')
-            .join('\n');
+            .map((line) => line.textContent || line.innerText || "")
+            .join("\n");
         } else {
-          code = codeMirror.innerText || codeMirror.textContent || '';
+          code = codeMirror.innerText || codeMirror.textContent || "";
         }
       }
-      
+
       // Method 2: Try CodeMirror textarea (hidden input)
       if (!code) {
-        const codeMirrorTextarea = document.querySelector('.CodeMirror textarea');
+        const codeMirrorTextarea = document.querySelector(
+          ".CodeMirror textarea"
+        );
         if (codeMirrorTextarea && codeMirrorTextarea.value) {
           code = codeMirrorTextarea.value;
         }
       }
-      
+
       // Method 3: Try regular textarea
       if (!code) {
-        const textarea = document.querySelector('textarea[class*="code"]') ||
-                        document.querySelector('textarea[name="code"]') ||
-                        document.querySelector('textarea');
+        const textarea =
+          document.querySelector('textarea[class*="code"]') ||
+          document.querySelector('textarea[name="code"]') ||
+          document.querySelector("textarea");
         if (textarea) {
-          code = textarea.value || textarea.textContent || '';
+          code = textarea.value || textarea.textContent || "";
         }
       }
 
       // Method 4: Try pre/code elements (for submitted solutions)
       if (!code) {
-        const codeElement = document.querySelector('pre code') ||
-                           document.querySelector('pre[class*="code"]') ||
-                           document.querySelector('pre');
+        const codeElement =
+          document.querySelector("pre code") ||
+          document.querySelector('pre[class*="code"]') ||
+          document.querySelector("pre");
         if (codeElement) {
-          code = codeElement.textContent || codeElement.innerText || '';
+          code = codeElement.textContent || codeElement.innerText || "";
         }
       }
 
       return {
-        platform: 'hackerrank',
+        platform: "hackerrank",
         title: title,
-        problemNumber: '',
+        problemNumber: "",
         description: description,
         code: code.trim(),
         language: language,
-        url: window.location.href
+        url: window.location.href,
       };
     } catch (error) {
-      console.error('Error extracting HackerRank data:', error);
+      console.error("Error extracting HackerRank data:", error);
       return null;
     }
   }
 
   // Normalize language names to standard format
   static normalizeLanguage(lang) {
-    if (!lang || lang === 'unknown') return 'unknown';
-    
+    if (!lang || lang === "unknown") return "unknown";
+
     // First, try to match common patterns before normalization
     const langLower = lang.toLowerCase().trim();
-    
+
     // Direct matches for common formats
-    if (langLower.includes('python')) {
-      return 'python';
+    if (langLower.includes("python")) {
+      return "python";
     }
-    if (langLower.includes('javascript') || langLower === 'js') {
-      return 'javascript';
+    if (langLower.includes("javascript") || langLower === "js") {
+      return "javascript";
     }
-    if (langLower.includes('typescript') || langLower === 'ts') {
-      return 'typescript';
+    if (langLower.includes("typescript") || langLower === "ts") {
+      return "typescript";
     }
-    if (langLower.includes('java') && !langLower.includes('javascript')) {
-      return 'java';
+    if (langLower.includes("java") && !langLower.includes("javascript")) {
+      return "java";
     }
-    if (langLower.includes('c++') || langLower.includes('cpp') || langLower.includes('cplusplus')) {
-      return 'cpp';
+    if (
+      langLower.includes("c++") ||
+      langLower.includes("cpp") ||
+      langLower.includes("cplusplus")
+    ) {
+      return "cpp";
     }
-    if (langLower === 'c' || langLower === 'c ' || (langLower.includes(' c ') && !langLower.includes('c++'))) {
-      return 'c';
+    if (
+      langLower === "c" ||
+      langLower === "c " ||
+      (langLower.includes(" c ") && !langLower.includes("c++"))
+    ) {
+      return "c";
     }
-    if (langLower.includes('c#') || langLower.includes('csharp')) {
-      return 'csharp';
+    if (langLower.includes("c#") || langLower.includes("csharp")) {
+      return "csharp";
     }
-    if (langLower.includes('go') || langLower.includes('golang')) {
-      return 'go';
+    if (langLower.includes("go") || langLower.includes("golang")) {
+      return "go";
     }
-    if (langLower.includes('rust')) {
-      return 'rust';
+    if (langLower.includes("rust")) {
+      return "rust";
     }
-    if (langLower.includes('ruby')) {
-      return 'ruby';
+    if (langLower.includes("ruby")) {
+      return "ruby";
     }
-    if (langLower.includes('swift')) {
-      return 'swift';
+    if (langLower.includes("swift")) {
+      return "swift";
     }
-    if (langLower.includes('kotlin')) {
-      return 'kotlin';
+    if (langLower.includes("kotlin")) {
+      return "kotlin";
     }
-    if (langLower.includes('scala')) {
-      return 'scala';
+    if (langLower.includes("scala")) {
+      return "scala";
     }
-    if (langLower.includes('php')) {
-      return 'php';
+    if (langLower.includes("php")) {
+      return "php";
     }
-    if (langLower.includes('sql')) {
-      return 'sql';
+    if (langLower.includes("sql")) {
+      return "sql";
     }
-    if (langLower.includes('bash') || langLower.includes('shell')) {
-      return 'bash';
+    if (langLower.includes("bash") || langLower.includes("shell")) {
+      return "bash";
     }
-    
+
     // Fallback: normalize and map
-    const normalized = langLower
-      .replace(/\s+/g, '')
-      .replace(/[^a-z0-9]/g, '');
-    
+    const normalized = langLower.replace(/\s+/g, "").replace(/[^a-z0-9]/g, "");
+
     const langMap = {
-      'python': 'python',
-      'python3': 'python',
-      'py': 'python',
-      'javascript': 'javascript',
-      'js': 'javascript',
-      'typescript': 'typescript',
-      'ts': 'typescript',
-      'java': 'java',
-      'cpp': 'cpp',
-      'c++': 'cpp',
-      'cplusplus': 'cpp',
-      'c': 'c',
-      'csharp': 'csharp',
-      'c#': 'csharp',
-      'cs': 'csharp',
-      'go': 'go',
-      'golang': 'go',
-      'rust': 'rust',
-      'rs': 'rust',
-      'ruby': 'ruby',
-      'rb': 'ruby',
-      'swift': 'swift',
-      'kotlin': 'kotlin',
-      'kt': 'kotlin',
-      'scala': 'scala',
-      'php': 'php',
-      'sql': 'sql',
-      'mysql': 'sql',
-      'bash': 'bash',
-      'shell': 'bash',
-      'sh': 'bash'
+      python: "python",
+      python3: "python",
+      py: "python",
+      javascript: "javascript",
+      js: "javascript",
+      typescript: "typescript",
+      ts: "typescript",
+      java: "java",
+      cpp: "cpp",
+      "c++": "cpp",
+      cplusplus: "cpp",
+      c: "c",
+      csharp: "csharp",
+      "c#": "csharp",
+      cs: "csharp",
+      go: "go",
+      golang: "go",
+      rust: "rust",
+      rs: "rust",
+      ruby: "ruby",
+      rb: "ruby",
+      swift: "swift",
+      kotlin: "kotlin",
+      kt: "kotlin",
+      scala: "scala",
+      php: "php",
+      sql: "sql",
+      mysql: "sql",
+      bash: "bash",
+      shell: "bash",
+      sh: "bash",
     };
-    
-    return langMap[normalized] || normalized || 'unknown';
+
+    return langMap[normalized] || normalized || "unknown";
   }
 }
-

@@ -58,6 +58,8 @@ async function pushToGitHub(data) {
     bash: "sh",
     shell: "sh",
     sh: "sh",
+    pandas: "py",
+    react: "jsx",
     unknown: "txt",
   };
 
@@ -101,19 +103,16 @@ async function pushToGitHub(data) {
       cleanTitle = "Problem";
     }
 
-    // Convert to PascalCase (Remove spaces, capitalize words)
-    // "Two Sum" -> "TwoSum"
-    const toPascalCase = (text) => {
+    // Convert to SnakeCase (Replace spaces with underscores)
+    // "Two Sum" -> "Two_Sum"
+    const toSnakeCase = (text) => {
       return text
-        .replace(/[^a-zA-Z0-9\s]/g, "") // Remove special chars
-        .split(/\s+/)
-        .map(
-          (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        )
-        .join("");
+        .replace(/[^a-zA-Z0-9\s-]/g, "") // Remove special chars but keep spaces and hyphens
+        .trim()
+        .replace(/\s+/g, "_"); // Replace spaces with underscores
     };
 
-    cleanTitle = toPascalCase(cleanTitle);
+    cleanTitle = toSnakeCase(cleanTitle);
 
     // Fallback if title becomes empty after sanitization
     if (!cleanTitle) cleanTitle = "Problem";
