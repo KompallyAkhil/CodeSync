@@ -263,66 +263,131 @@ class PlatformExtractor {
         ? descriptionElement.innerText
         : "";
 
-      // Extract language
+      // Extract language - key fix for GFG
+      // Look for the specific dropdown or active language element
       let language = "unknown";
 
-      // Try to find language selector
-      const langSelector =
-        document.querySelector('[class*="language"]') ||
-        document.querySelector('button[class*="lang"]') ||
-        document.querySelector('select[class*="lang"]') ||
-        document.querySelector("[data-language]");
-
-      if (langSelector) {
-        language =
-          langSelector.textContent.trim() ||
-          langSelector.value ||
-          langSelector.getAttribute("data-language") ||
-          langSelector.getAttribute("data-lang") ||
-          "unknown";
+      // Method 1: Check for active language in dropdown/tabs
+      const activeLang =
+        document.querySelector(".active-language") ||
+        document.querySelector(".language-active") ||
+        document.querySelector(".gfg-dropdown-active");
+      if (activeLang) {
+        language = activeLang.textContent || activeLang.innerText;
       }
 
-      // Check code block for language class
+      // Method 2: Check for specific GFG editor language selector
       if (language === "unknown") {
-        const codeBlock =
-          document.querySelector('pre[class*="language"]') ||
-          document.querySelector('code[class*="language"]');
-        if (codeBlock) {
-          const classes = codeBlock.className;
-          const langMatch = classes.match(/language-(\w+)/);
-          if (langMatch) {
-            language = langMatch[1];
+        const formattingBar = document.querySelectorAll(
+          ".editor-toolbar, .divider, .pull-right"
+        );
+        for (const bar of formattingBar) {
+          const text = bar.textContent;
+          // Simple heuristic: check if bar contains common languages
+          const knownLangs = [
+            "C++",
+            "Java",
+            "Python",
+            "Python 3",
+            "C",
+            "C#",
+            "JavaScript",
+          ];
+          for (const lang of knownLangs) {
+            if (text.includes(lang)) {
+              // Verify it's not just a label "Language:" but the selected one
+              // Often GFG shows: "Language : Python 3"
+              if (text.includes("Language") || text.includes("Lang")) {
+                language = lang;
+                break;
+              }
+            }
+          }
+          if (language !== "unknown") break;
+        }
+      }
+
+      // Method 3: Fallback - look for known languages in all buttons/dropdowns in the editor area
+      if (language === "unknown") {
+        const editorArea =
+          document.querySelector(".problem-editor") || document.body;
+        const dropdowns = editorArea.querySelectorAll(
+          ".dropdown-text, .ui.selection.dropdown, select"
+        );
+
+        const knownLanguages = [
+          "C++",
+          "Java",
+          "Python",
+          "Python3",
+          "C",
+          "C#",
+          "JavaScript",
+          "TypeScript",
+          "PHP",
+          "Swift",
+          "Kotlin",
+          "Dart",
+          "Go",
+          "Ruby",
+          "Scala",
+          "Rust",
+        ];
+
+        for (const dd of dropdowns) {
+          const text = dd.textContent || dd.value;
+          if (knownLanguages.includes(text.trim())) {
+            language = text.trim();
+            break;
           }
         }
       }
 
       language = this.normalizeLanguage(language);
 
-      // Extract code solution - prioritize editor content
+      // Extract code solution - fix for "other code" issue
       let code = "";
 
-      // Try CodeMirror editor
-      const codeMirror = document.querySelector(".CodeMirror-code");
-      if (codeMirror) {
-        code = codeMirror.innerText;
+      // Method 1: Ace Editor (Most common on GFG Practice)
+      const aceLines = document.querySelectorAll(".ace_line");
+      if (aceLines.length > 0) {
+        // Ace editor renders lines as individual divs
+        code = Array.from(aceLines)
+          .map((line) => line.textContent.replace(/\s+$/, ""))
+          .join("\n");
       }
 
-      // Try textarea
+      // Method 2: Monaco Editor (Newer GFG)
       if (!code) {
-        const textarea = document.querySelector("textarea");
-        if (textarea) {
-          code = textarea.value || textarea.textContent || "";
+        const viewLines = document.querySelectorAll(
+          ".monaco-editor .view-line"
+        );
+        if (viewLines.length > 0) {
+          code = Array.from(viewLines)
+            .map((line) => line.textContent.replace(/\s+$/, ""))
+            .join("\n");
         }
       }
 
-      // Try pre/code elements
+      // Method 3: CodeMirror (If used, ensure it's the editor one)
       if (!code) {
-        const codeElement =
-          document.querySelector("pre code") ||
-          document.querySelector('pre[class*="code"]') ||
-          document.querySelector(".code-container pre");
-        if (codeElement) {
-          code = codeElement.textContent || codeElement.innerText || "";
+        // Get the LAST CodeMirror on the page, usually the editor (others are examples)
+        const codeMirrors = document.querySelectorAll(".CodeMirror-code");
+        if (codeMirrors.length > 0) {
+          const editorCM = codeMirrors[codeMirrors.length - 1];
+          code = editorCM.innerText;
+        }
+      }
+
+      // Method 4: Fallback to textarea (but be careful of description textareas)
+      if (!code) {
+        const textareas = document.querySelectorAll("textarea");
+        // Filter out textareas with little content or known description classes
+        for (const ta of textareas) {
+          if (ta.value.length > 20 && !ta.className.includes("comment")) {
+            code = ta.value;
+            break; // Take the first substantial textarea
+          }
         }
       }
 
