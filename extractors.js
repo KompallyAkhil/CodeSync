@@ -248,8 +248,9 @@ class PlatformExtractor {
       // Extract problem title
       const titleElement =
         document.querySelector(".gfg-article-title") ||
-        document.querySelector("h1") ||
-        document.querySelector(".title");
+        document.querySelector('[class*="problems_header_content_title"]') ||
+        document.querySelector('[class*="problem-title"]') ||
+        document.querySelector("h3");
       const title = titleElement
         ? titleElement.textContent.trim()
         : "Unknown Problem";
@@ -257,33 +258,45 @@ class PlatformExtractor {
       // Extract problem description
       const descriptionElement =
         document.querySelector(".problem-statement") ||
+        document.querySelector('[class*="problems_description__"]') ||
         document.querySelector(".content") ||
         document.querySelector("article");
       const description = descriptionElement
         ? descriptionElement.innerText
         : "";
 
-      // Extract language - key fix for GFG
-      // Look for the specific dropdown or active language element
+      // Extract language
       let language = "unknown";
 
-      // Method 1: Check for active language in dropdown/tabs
-      const activeLang =
-        document.querySelector(".active-language") ||
-        document.querySelector(".language-active") ||
-        document.querySelector(".gfg-dropdown-active");
-      if (activeLang) {
-        language = activeLang.textContent || activeLang.innerText;
+      // Method 1: Check for new specific dropdown class (from screenshot)
+      const newDropdown = document.querySelector(
+        '[class*="problems_language_dropdown__"]'
+      );
+      if (newDropdown) {
+        // Use innerText to avoid hidden text (which textContent might include),
+        // and take the first line to ensure we only get the selected value
+        const text = newDropdown.innerText || "";
+        language = text.split("\n")[0].trim();
       }
 
-      // Method 2: Check for specific GFG editor language selector
+      // Method 2: Check for active language in older dropdowns/tabs
+      if (language === "unknown") {
+        const activeLang =
+          document.querySelector(".active-language") ||
+          document.querySelector(".language-active") ||
+          document.querySelector(".gfg-dropdown-active");
+        if (activeLang) {
+          language = activeLang.textContent || activeLang.innerText;
+        }
+      }
+
+      // Method 3: Check for specific GFG editor language selector (older versions)
       if (language === "unknown") {
         const formattingBar = document.querySelectorAll(
           ".editor-toolbar, .divider, .pull-right"
         );
         for (const bar of formattingBar) {
           const text = bar.textContent;
-          // Simple heuristic: check if bar contains common languages
           const knownLangs = [
             "C++",
             "Java",
@@ -295,8 +308,6 @@ class PlatformExtractor {
           ];
           for (const lang of knownLangs) {
             if (text.includes(lang)) {
-              // Verify it's not just a label "Language:" but the selected one
-              // Often GFG shows: "Language : Python 3"
               if (text.includes("Language") || text.includes("Lang")) {
                 language = lang;
                 break;
@@ -307,12 +318,14 @@ class PlatformExtractor {
         }
       }
 
-      // Method 3: Fallback - look for known languages in all buttons/dropdowns in the editor area
+      // Method 4: Fallback - look for known languages in all dropdowns
       if (language === "unknown") {
         const editorArea =
-          document.querySelector(".problem-editor") || document.body;
+          document.querySelector(".problem-editor") ||
+          document.querySelector('[class*="problems_right_section__"]') ||
+          document.body;
         const dropdowns = editorArea.querySelectorAll(
-          ".dropdown-text, .ui.selection.dropdown, select"
+          ".dropdown-text, .ui.selection.dropdown, select, [role='listbox']"
         );
 
         const knownLanguages = [
@@ -345,13 +358,14 @@ class PlatformExtractor {
 
       language = this.normalizeLanguage(language);
 
-      // Extract code solution - fix for "other code" issue
+      // Extract code solution
       let code = "";
 
       // Method 1: Ace Editor (Most common on GFG Practice)
       const aceLines = document.querySelectorAll(".ace_line");
       if (aceLines.length > 0) {
         // Ace editor renders lines as individual divs
+        // We need to be careful to sort them if they aren't in order, but usually querySelectorAll returns doc order
         code = Array.from(aceLines)
           .map((line) => line.textContent.replace(/\s+$/, ""))
           .join("\n");
@@ -369,9 +383,8 @@ class PlatformExtractor {
         }
       }
 
-      // Method 3: CodeMirror (If used, ensure it's the editor one)
+      // Method 3: CodeMirror
       if (!code) {
-        // Get the LAST CodeMirror on the page, usually the editor (others are examples)
         const codeMirrors = document.querySelectorAll(".CodeMirror-code");
         if (codeMirrors.length > 0) {
           const editorCM = codeMirrors[codeMirrors.length - 1];
@@ -379,14 +392,13 @@ class PlatformExtractor {
         }
       }
 
-      // Method 4: Fallback to textarea (but be careful of description textareas)
+      // Method 4: Fallback to textarea
       if (!code) {
         const textareas = document.querySelectorAll("textarea");
-        // Filter out textareas with little content or known description classes
         for (const ta of textareas) {
           if (ta.value.length > 20 && !ta.className.includes("comment")) {
             code = ta.value;
-            break; // Take the first substantial textarea
+            break;
           }
         }
       }
