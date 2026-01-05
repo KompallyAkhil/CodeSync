@@ -265,10 +265,10 @@ class PlatformExtractor {
         ? descriptionElement.innerText
         : "";
 
-      // Extract language
+      // Extract language - Robust multi-method approach
       let language = "unknown";
 
-      // Method 1: Check for new specific dropdown class (from screenshot)
+      // Method 1: Check for new specific dropdown class (React/Next versions)
       const newDropdown = document.querySelector(
         '[class*="problems_language_dropdown__"]'
       );
@@ -318,14 +318,14 @@ class PlatformExtractor {
         }
       }
 
-      // Method 4: Fallback - look for known languages in all dropdowns
+      // Method 4: Fallback - look for known languages in all dropdowns (Robust like LeetCode)
       if (language === "unknown") {
         const editorArea =
           document.querySelector(".problem-editor") ||
           document.querySelector('[class*="problems_right_section__"]') ||
           document.body;
         const dropdowns = editorArea.querySelectorAll(
-          ".dropdown-text, .ui.selection.dropdown, select, [role='listbox']"
+          ".dropdown-text, .ui.selection.dropdown, select, [role='listbox'], button"
         );
 
         const knownLanguages = [
@@ -349,7 +349,7 @@ class PlatformExtractor {
 
         for (const dd of dropdowns) {
           const text = dd.textContent || dd.value;
-          if (knownLanguages.includes(text.trim())) {
+          if (text && knownLanguages.includes(text.trim())) {
             language = text.trim();
             break;
           }
@@ -358,26 +358,42 @@ class PlatformExtractor {
 
       language = this.normalizeLanguage(language);
 
-      // Extract code solution
+      // Extract code solution - Prioritize Monaco like LeetCode
       let code = "";
 
-      // Method 1: Ace Editor (Most common on GFG Practice)
-      const aceLines = document.querySelectorAll(".ace_line");
-      if (aceLines.length > 0) {
-        // Ace editor renders lines as individual divs
-        // We need to be careful to sort them if they aren't in order, but usually querySelectorAll returns doc order
-        code = Array.from(aceLines)
-          .map((line) => line.textContent.replace(/\s+$/, ""))
-          .join("\n");
-      }
-
-      // Method 2: Monaco Editor (Newer GFG)
-      if (!code) {
-        const viewLines = document.querySelectorAll(
-          ".monaco-editor .view-line"
-        );
+      // Method 1: Try Monaco Editor (Newer GFG & LeetCode standard)
+      const monacoEditorElement = document.querySelector(".monaco-editor");
+      if (monacoEditorElement) {
+        // Try to get code from Monaco editor view lines
+        const viewLines = monacoEditorElement.querySelectorAll(".view-line");
         if (viewLines.length > 0) {
           code = Array.from(viewLines)
+            .map((line) => {
+              const lineText = line.textContent || "";
+              return lineText.replace(/\s+$/, "");
+            })
+            .join("\n");
+        }
+
+        // Alternative: Try to access Monaco editor model directly via window (if feasible via context)
+        // Note: Content scripts cannot access window.monaco directly due to isolation,
+        // but we keep the logic structure for potential future injection.
+
+        // Alternative: Try to find Monaco's hidden textarea
+        if (!code) {
+          const monacoTextarea = monacoEditorElement.querySelector("textarea");
+          if (monacoTextarea && monacoTextarea.value) {
+            code = monacoTextarea.value;
+          }
+        }
+      }
+
+      // Method 2: Ace Editor (Most common on older GFG Practice)
+      if (!code) {
+        const aceLines = document.querySelectorAll(".ace_line");
+        if (aceLines.length > 0) {
+          // Ace editor renders lines as individual divs
+          code = Array.from(aceLines)
             .map((line) => line.textContent.replace(/\s+$/, ""))
             .join("\n");
         }
@@ -387,15 +403,16 @@ class PlatformExtractor {
       if (!code) {
         const codeMirrors = document.querySelectorAll(".CodeMirror-code");
         if (codeMirrors.length > 0) {
-          const editorCM = codeMirrors[codeMirrors.length - 1];
+          const editorCM = codeMirrors[codeMirrors.length - 1]; // Usually the last one is the editor
           code = editorCM.innerText;
         }
       }
 
-      // Method 4: Fallback to textarea
+      // Method 4: Fallback to textarea (Simple editors)
       if (!code) {
         const textareas = document.querySelectorAll("textarea");
         for (const ta of textareas) {
+          // Filter out small textareas (likely comments)
           if (ta.value.length > 20 && !ta.className.includes("comment")) {
             code = ta.value;
             break;
@@ -403,10 +420,19 @@ class PlatformExtractor {
         }
       }
 
+      // Method 5: Pre/Code elements (Static views)
+      if (!code) {
+        const codeElement =
+          document.querySelector("pre code") || document.querySelector("pre");
+        if (codeElement) {
+          code = codeElement.textContent || codeElement.innerText || "";
+        }
+      }
+
       return {
         platform: "geeksforgeeks",
         title: title,
-        problemNumber: "",
+        problemNumber: "", // GFG usually doesn't have a standardized number in the title
         description: description,
         code: code.trim(),
         language: language,
@@ -542,10 +568,10 @@ class PlatformExtractor {
         }
       }
 
-      // Extract language - try multiple methods
+      // Extract language - Robust multi-method approach
       let language = "unknown";
 
-      // Method 1: Check language dropdown/select
+      // Method 1: Check language dropdown/select (HackerRank specific)
       const langSelect =
         document.querySelector('select[data-attr1="language"]') ||
         document.querySelector('select[class*="lang"]') ||
@@ -581,20 +607,7 @@ class PlatformExtractor {
         }
       }
 
-      // Method 3: Check for selected option
-      if (language === "unknown") {
-        const selectedOption =
-          document.querySelector("option[selected]") ||
-          document.querySelector('option[selected="selected"]');
-        if (selectedOption) {
-          language =
-            selectedOption.textContent.trim() ||
-            selectedOption.value ||
-            "unknown";
-        }
-      }
-
-      // Method 4: Check URL or page context for language hint
+      // Method 3: Check URL or page context for language hint
       if (language === "unknown") {
         const urlParams = new URLSearchParams(window.location.search);
         const langParam = urlParams.get("language") || urlParams.get("lang");
@@ -603,26 +616,95 @@ class PlatformExtractor {
         }
       }
 
-      language = this.normalizeLanguage(language);
+      // Method 4: Fallback - look for known languages in all dropdowns (Robust like LeetCode/GFG)
+      if (language === "unknown") {
+        const editorArea =
+          document.querySelector(".editor-wrapper") || document.body;
+        const potentialElements = editorArea.querySelectorAll(
+          ".dropdown-text, .ui.selection.dropdown, select, [role='listbox'], button, span"
+        );
 
-      // Extract code solution - prioritize active editor
-      let code = "";
+        const knownLanguages = [
+          "C++",
+          "Java",
+          "Python",
+          "Python3",
+          "C",
+          "C#",
+          "JavaScript",
+          "TypeScript",
+          "PHP",
+          "Swift",
+          "Kotlin",
+          "Dart",
+          "Go",
+          "Ruby",
+          "Scala",
+          "Rust",
+        ];
 
-      // Method 1: Try CodeMirror (HackerRank's main editor)
-      const codeMirror = document.querySelector(".CodeMirror-code");
-      if (codeMirror) {
-        // Get all lines from CodeMirror
-        const lines = codeMirror.querySelectorAll(".CodeMirror-line");
-        if (lines.length > 0) {
-          code = Array.from(lines)
-            .map((line) => line.textContent || line.innerText || "")
-            .join("\n");
-        } else {
-          code = codeMirror.innerText || codeMirror.textContent || "";
+        for (const el of potentialElements) {
+          const text = el.textContent || el.value;
+          if (text && knownLanguages.includes(text.trim())) {
+            language = text.trim();
+            break;
+          }
         }
       }
 
-      // Method 2: Try CodeMirror textarea (hidden input)
+      language = this.normalizeLanguage(language);
+
+      // Extract code solution - Prioritize editors
+      let code = "";
+
+      // Method 1: Try Monaco Editor
+      const monacoEditorElement = document.querySelector(".monaco-editor");
+      if (monacoEditorElement) {
+        const viewLines = monacoEditorElement.querySelectorAll(".view-line");
+        if (viewLines.length > 0) {
+          code = Array.from(viewLines)
+            .map((line) => {
+              const lineText = line.textContent || "";
+              return lineText.replace(/\s+$/, "");
+            })
+            .join("\n");
+        }
+
+        if (!code) {
+          const monacoTextarea = monacoEditorElement.querySelector("textarea");
+          if (monacoTextarea && monacoTextarea.value) {
+            code = monacoTextarea.value;
+          }
+        }
+      }
+
+      // Method 2: Try CodeMirror (HackerRank's usual editor)
+      if (!code) {
+        const codeMirror = document.querySelector(".CodeMirror-code");
+        if (codeMirror) {
+          // Get all lines from CodeMirror
+          const lines = codeMirror.querySelectorAll(".CodeMirror-line");
+          if (lines.length > 0) {
+            code = Array.from(lines)
+              .map((line) => line.textContent || line.innerText || "")
+              .join("\n");
+          } else {
+            code = codeMirror.innerText || codeMirror.textContent || "";
+          }
+        }
+      }
+
+      // Method 3: Try Ace Editor
+      if (!code) {
+        const aceLines = document.querySelectorAll(".ace_line");
+        if (aceLines.length > 0) {
+          code = Array.from(aceLines)
+            .map((line) => line.textContent.replace(/\s+$/, ""))
+            .join("\n");
+        }
+      }
+
+      // Method 4: Try CodeMirror textarea (hidden input)
       if (!code) {
         const codeMirrorTextarea = document.querySelector(
           ".CodeMirror textarea"
@@ -632,7 +714,7 @@ class PlatformExtractor {
         }
       }
 
-      // Method 3: Try regular textarea
+      // Method 5: Try regular textarea
       if (!code) {
         const textarea =
           document.querySelector('textarea[class*="code"]') ||
@@ -643,7 +725,7 @@ class PlatformExtractor {
         }
       }
 
-      // Method 4: Try pre/code elements (for submitted solutions)
+      // Method 6: Try pre/code elements (for submitted solutions)
       if (!code) {
         const codeElement =
           document.querySelector("pre code") ||
