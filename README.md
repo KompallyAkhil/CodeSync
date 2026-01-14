@@ -22,7 +22,7 @@ CodeSync is a Chrome extension that helps you sync your coding solutions from va
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/codesync-extension.git
+   git clone https://github.com/KompallyAkhik/CodeSync.git
    ```
 2. Install dependencies:
    ```bash
