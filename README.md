@@ -1,16 +1,59 @@
-# React + Vite
+# CodeSync Extension
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+CodeSync is a Chrome extension that helps you sync your coding solutions from various competitive programming platforms directly to your GitHub repository.
 
-Currently, two official plugins are available:
+## Supported Platforms
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- [x] LeetCode
+- [x] GeeksforGeeks
+- [x] Codeforces
+- [x] HackerRank
 
-## React Compiler
+## Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Auto-Detection**: Automatically detects the coding platform you are using.
+- **One-Click Sync**: Extract your solution and problem details with a single click.
+- **GitHub Integration**: Pushes code directly to your configured GitHub repository.
+- **Status Updates**: Real-time feedback on extraction and upload status.
 
-## Expanding the ESLint configuration
+## Installation
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### From Source
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/codesync-extension.git
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Build the extension:
+   ```bash
+   npm run build
+   ```
+4. Load into Chrome:
+   - Open Chrome and go to `chrome://extensions`.
+   - Enable "Developer mode" (top right).
+   - Click "Load unpacked".
+   - Select the `dist` folder from the project directory.
+
+## Configuration
+
+1. Click the extension icon in the toolbar.
+2. Go to the **Settings** page (gear icon if not automatically prompted).
+3. Enter your **GitHub Personal Access Token** (Generate one [here](https://github.com/settings/tokens) with `repo` scope).
+4. Enter your **GitHub Username**.
+5. Enter the **Repository Name** where you want to save solutions (must exist).
+6. Click **Save Configuration**.
+
+## Development
+
+- `npm run dev` - Start dev server (not typical for extensions, but available).
+- `npm run build` - Build for production.
+
+## Tech Stack
+
+- React
+- Vite
+- Chrome Extension Manifest V3
