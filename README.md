@@ -6,8 +6,6 @@ CodeSync is a Chrome extension that helps you sync your coding solutions from va
 
 - [x] LeetCode
 - [x] GeeksforGeeks
-- [x] Codeforces
-- [x] HackerRank
 
 ## Features
 
